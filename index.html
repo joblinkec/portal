@@ -182,8 +182,10 @@
   .main-header .meta{font-size:13px;color:#6b6555;margin-top:4px;}
   .toolbar{
     display:flex;
+    flex-wrap:wrap;
     gap:8px;
     margin-bottom:24px;
+    align-items:center;
   }
   .empty-state{
     padding:60px 20px;
@@ -246,6 +248,57 @@
     margin-left:auto;
     padding-right:6px;
   }
+  .color-picker{display:flex;gap:8px;margin-top:12px;align-items:center;}
+  .color-picker .picker-label{font-size:12px;color:#918a76;margin-right:2px;}
+  .color-swatch{
+    width:20px;height:20px;border-radius:50%;
+    border:2px solid transparent;
+    cursor:pointer;
+    box-shadow:0 0 0 1px var(--line);
+  }
+  .color-swatch.selected{border-color:#fff;box-shadow:0 0 0 2px var(--ink);}
+  .heading-input{
+    font-family:'Lora',Georgia,serif;
+    font-size:19px;
+    font-weight:600;
+  }
+  .metric-inputs{display:flex;gap:12px;}
+  .metric-value-input{font-family:'Lora',Georgia,serif;font-size:22px;font-weight:600;}
+  .quote-textarea{font-style:italic;min-height:80px;}
+  .list-items{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+  .list-item-row{display:flex;gap:8px;align-items:center;}
+  .list-item-row input{flex:1;}
+  .checklist-toggle{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13.5px;color:#4a4636;}
+  .checklist-toggle input{width:auto;}
+  .gallery-items{display:flex;flex-direction:column;gap:12px;margin-bottom:10px;}
+  .gallery-item-edit{border:1px solid var(--line);border-radius:4px;padding:12px;}
+  .gallery-item-edit input{margin-bottom:8px;}
+  .gallery-item-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+
+  /* ---------- New report block types (client view) ---------- */
+  .report-block.heading h3{font-size:22px;border-bottom:2px solid; padding-bottom:9px;}
+  .report-block.metric .metric-value{font-family:'Lora',Georgia,serif;font-size:44px;font-weight:600;line-height:1;}
+  .report-block.metric .metric-label{font-size:14px;color:#6b6555;margin-top:8px;}
+  .report-block.quote{border-left:4px solid;padding:4px 20px;}
+  .report-block.quote p{white-space:pre-wrap;margin:0;font-style:italic;font-size:16px;}
+  .report-block.quote .quote-source{font-style:normal;font-size:13px;color:#6b6555;margin-top:10px;}
+  .report-block.list ul{margin:0;padding-left:22px;}
+  .report-block.list li{margin-bottom:6px;}
+  .report-block.list.checklist ul{list-style:none;padding-left:0;}
+  .report-block.list.checklist li{display:flex;gap:9px;align-items:flex-start;font-weight:600;}
+  .report-btn-link{
+    display:inline-block;
+    padding:12px 24px;
+    border-radius:4px;
+    color:#fff;
+    text-decoration:none;
+    font-weight:500;
+    font-size:14px;
+  }
+  .gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;}
+  .gallery-grid figure{margin:0;}
+  .gallery-grid img{width:100%;height:160px;object-fit:cover;border-radius:2px;border:1px solid var(--line);display:block;}
+  .gallery-grid figcaption{font-size:12.5px;color:#918a76;margin-top:6px;}
 
   /* ---------- Client report view ---------- */
   .report-header{
@@ -320,6 +373,31 @@ const store = {
 const ADMIN_KEY = 'admin-config';
 const CLIENTS_KEY = 'clients-list';
 
+const BLOCK_COLORS = ['#20261f','#a97c3a','#33564d','#a14a3a','#3b5b8c','#7a4a6b'];
+function blockColor(block){ return (block && block.color) || BLOCK_COLORS[0]; }
+function colorPickerHTML(current){
+  const cur = current || BLOCK_COLORS[0];
+  return `<div class="color-picker"><span class="picker-label">Color</span>` +
+    BLOCK_COLORS.map(c=>`<div class="color-swatch ${c===cur?'selected':''}" data-color="${c}" style="background:${c};"></div>`).join('') +
+    `</div>`;
+}
+function attachColorPicker(scope, block, onChange){
+  const picker = scope.querySelector('.color-picker');
+  if(!picker) return;
+  picker.querySelectorAll('.color-swatch').forEach(sw=>{
+    sw.addEventListener('click', ()=>{
+      block.color = sw.dataset.color;
+      picker.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+      sw.classList.add('selected');
+      onChange();
+    });
+  });
+}
+const KIND_LABELS = {
+  text:'Texto', image:'Imagen', table:'Tabla', heading:'Encabezado',
+  metric:'Métrica destacada', quote:'Cita / destacado', list:'Lista', link:'Botón / enlace', gallery:'Galería de imágenes'
+};
+
 let state = {
   role: null,        // 'admin' | 'client'
   clientUser: null,  // username string when role === client
@@ -347,7 +425,7 @@ async function init(){
   }
   let admin = await store.get(ADMIN_KEY);
   if(!admin){
-    admin = { username:'agencia', password:'empleo2026' };
+    admin = { username:'agencia', password:'davidyangel2026' };
     await store.set(ADMIN_KEY, admin);
   }
   let clients = await store.get(CLIENTS_KEY);
@@ -569,9 +647,15 @@ async function renderClientEditor(main, username){
 
   const toolbar = el(`
     <div class="toolbar">
+      <button class="secondary" data-add="heading">+ Encabezado</button>
       <button class="secondary" data-add="text">+ Texto</button>
       <button class="secondary" data-add="image">+ Imagen</button>
+      <button class="secondary" data-add="gallery">+ Galería</button>
       <button class="secondary" data-add="table">+ Tabla</button>
+      <button class="secondary" data-add="metric">+ Métrica</button>
+      <button class="secondary" data-add="quote">+ Cita</button>
+      <button class="secondary" data-add="list">+ Lista</button>
+      <button class="secondary" data-add="link">+ Botón/enlace</button>
       <span class="save-note" id="saveNote"></span>
     </div>
   `);
@@ -596,7 +680,7 @@ async function renderClientEditor(main, username){
   function renderBlocks(){
     blocksContainer.innerHTML = '';
     if(blocks.length === 0){
-      blocksContainer.appendChild(el(`<div class="empty-state">Este informe está vacío. Agrega un bloque de texto, imagen o tabla arriba.</div>`));
+      blocksContainer.appendChild(el(`<div class="empty-state">Este informe está vacío. Agrega un bloque desde la barra de arriba para empezar.</div>`));
       return;
     }
     blocks.forEach((block, idx)=>{
@@ -605,7 +689,7 @@ async function renderClientEditor(main, username){
   }
 
   function renderBlockEditor(block, idx){
-    const kindLabel = block.type==='text' ? 'Texto' : block.type==='image' ? 'Imagen' : 'Tabla';
+    const kindLabel = KIND_LABELS[block.type] || block.type;
     const wrapper = el(`
       <div class="block">
         <div class="block-toprow">
@@ -622,9 +706,17 @@ async function renderClientEditor(main, username){
     const body = wrapper.querySelector('.block-body');
 
     if(block.type === 'text'){
-      body.innerHTML = `<textarea placeholder="Escribe el contenido de este bloque...">${escapeHtml(block.content||'')}</textarea>`;
+      body.innerHTML = `<textarea placeholder="Escribe el contenido de este bloque...">${escapeHtml(block.content||'')}</textarea>${colorPickerHTML(block.color)}`;
       const ta = body.querySelector('textarea');
       ta.addEventListener('input', ()=>{ block.content = ta.value; scheduleSave(); });
+      attachColorPicker(body, block, scheduleSave);
+    }
+
+    if(block.type === 'heading'){
+      body.innerHTML = `<input class="heading-input" placeholder="Título de la sección, ej: Postulaciones de esta semana" value="${escapeAttr(block.content||'')}">${colorPickerHTML(block.color)}`;
+      const input = body.querySelector('.heading-input');
+      input.addEventListener('input', ()=>{ block.content = input.value; scheduleSave(); });
+      attachColorPicker(body, block, scheduleSave);
     }
 
     if(block.type === 'image'){
@@ -652,8 +744,59 @@ async function renderClientEditor(main, username){
       updatePreview();
     }
 
+    if(block.type === 'gallery'){
+      body.appendChild(renderGalleryEditor(block));
+    }
+
     if(block.type === 'table'){
       body.appendChild(renderTableEditor(block));
+    }
+
+    if(block.type === 'metric'){
+      body.innerHTML = `
+        <div class="metric-inputs">
+          <div style="flex:1;">
+            <label>Valor</label>
+            <input class="metric-value-input" placeholder="12" value="${escapeAttr(block.value||'')}">
+          </div>
+          <div style="flex:2;">
+            <label>Etiqueta</label>
+            <input class="metric-label-input" placeholder="Postulaciones enviadas" value="${escapeAttr(block.label||'')}">
+          </div>
+        </div>
+        ${colorPickerHTML(block.color)}
+      `;
+      body.querySelector('.metric-value-input').addEventListener('input', (e)=>{ block.value = e.target.value; scheduleSave(); });
+      body.querySelector('.metric-label-input').addEventListener('input', (e)=>{ block.label = e.target.value; scheduleSave(); });
+      attachColorPicker(body, block, scheduleSave);
+    }
+
+    if(block.type === 'quote'){
+      body.innerHTML = `
+        <textarea class="quote-textarea" placeholder="Comentario o feedback destacado de un reclutador...">${escapeHtml(block.content||'')}</textarea>
+        <input class="caption-input" placeholder="Atribución (opcional), ej: Reclutadora de Empresa X" value="${escapeAttr(block.source||'')}">
+        ${colorPickerHTML(block.color)}
+      `;
+      body.querySelector('.quote-textarea').addEventListener('input', (e)=>{ block.content = e.target.value; scheduleSave(); });
+      body.querySelector('.caption-input').addEventListener('input', (e)=>{ block.source = e.target.value; scheduleSave(); });
+      attachColorPicker(body, block, scheduleSave);
+    }
+
+    if(block.type === 'list'){
+      body.appendChild(renderListEditor(block));
+    }
+
+    if(block.type === 'link'){
+      body.innerHTML = `
+        <label>Texto del botón</label>
+        <input class="link-label-input" placeholder="Ver vacante" value="${escapeAttr(block.label||'')}">
+        <label style="margin-top:10px;">URL</label>
+        <input class="link-url-input" placeholder="https://..." value="${escapeAttr(block.url||'')}">
+        ${colorPickerHTML(block.color)}
+      `;
+      body.querySelector('.link-label-input').addEventListener('input', (e)=>{ block.label = e.target.value; scheduleSave(); });
+      body.querySelector('.link-url-input').addEventListener('input', (e)=>{ block.url = e.target.value; scheduleSave(); });
+      attachColorPicker(body, block, scheduleSave);
     }
 
     wrapper.querySelector('[data-act="up"]').addEventListener('click', ()=>{
@@ -732,6 +875,89 @@ async function renderClientEditor(main, username){
     return container;
   }
 
+  function renderListEditor(block){
+    if(!block.items || block.items.length===0) block.items = [''];
+    const container = el(`<div></div>`);
+    const toggle = el(`
+      <label class="checklist-toggle">
+        <input type="checkbox" ${block.checklist?'checked':''}> Mostrar con marca de check (✓) en vez de viñetas
+      </label>
+    `);
+    container.appendChild(toggle);
+    toggle.querySelector('input').addEventListener('change', (e)=>{ block.checklist = e.target.checked; scheduleSave(); });
+
+    const itemsWrap = el(`<div class="list-items"></div>`);
+    container.appendChild(itemsWrap);
+
+    const addBtn = el(`<button class="ghost" style="padding-left:0;">+ Agregar ítem</button>`);
+    container.appendChild(addBtn);
+    addBtn.addEventListener('click', ()=>{ block.items.push(''); scheduleSave(); draw(); });
+
+    const colorDiv = el(colorPickerHTML(block.color));
+    container.appendChild(colorDiv);
+    attachColorPicker(container, block, scheduleSave);
+
+    function draw(){
+      itemsWrap.innerHTML = '';
+      block.items.forEach((item, i)=>{
+        const row = el(`
+          <div class="list-item-row">
+            <input value="${escapeAttr(item)}" placeholder="Escribe un ítem...">
+            <button class="ghost" style="color:var(--red);">Eliminar</button>
+          </div>
+        `);
+        row.querySelector('input').addEventListener('input', (e)=>{ block.items[i] = e.target.value; scheduleSave(); });
+        row.querySelector('button').addEventListener('click', ()=>{
+          if(block.items.length>1){ block.items.splice(i,1); } else { block.items[0]=''; }
+          scheduleSave(); draw();
+        });
+        itemsWrap.appendChild(row);
+      });
+    }
+    draw();
+    return container;
+  }
+
+  function renderGalleryEditor(block){
+    if(!block.images || block.images.length===0) block.images = [{url:'',caption:''}];
+    const container = el(`<div></div>`);
+    const itemsWrap = el(`<div class="gallery-items"></div>`);
+    container.appendChild(itemsWrap);
+
+    const addBtn = el(`<button class="ghost" style="padding-left:0;">+ Agregar imagen</button>`);
+    container.appendChild(addBtn);
+    addBtn.addEventListener('click', ()=>{ block.images.push({url:'',caption:''}); scheduleSave(); draw(); });
+
+    const colorDiv = el(colorPickerHTML(block.color));
+    container.appendChild(colorDiv);
+    attachColorPicker(container, block, scheduleSave);
+
+    function draw(){
+      itemsWrap.innerHTML = '';
+      block.images.forEach((img, i)=>{
+        const item = el(`
+          <div class="gallery-item-edit">
+            <div class="gallery-item-top">
+              <span class="block-kind">Imagen ${i+1}</span>
+              <button class="ghost" style="color:var(--red);">Eliminar</button>
+            </div>
+            <input class="g-url" placeholder="URL de la imagen" value="${escapeAttr(img.url||'')}">
+            <input class="g-cap" placeholder="Descripción (opcional)" value="${escapeAttr(img.caption||'')}">
+          </div>
+        `);
+        item.querySelector('.g-url').addEventListener('input', (e)=>{ block.images[i].url = e.target.value; scheduleSave(); });
+        item.querySelector('.g-cap').addEventListener('input', (e)=>{ block.images[i].caption = e.target.value; scheduleSave(); });
+        item.querySelector('button').addEventListener('click', ()=>{
+          if(block.images.length>1){ block.images.splice(i,1); } else { block.images[0] = {url:'',caption:''}; }
+          scheduleSave(); draw();
+        });
+        itemsWrap.appendChild(item);
+      });
+    }
+    draw();
+    return container;
+  }
+
   let debounce = null;
   function scheduleSave(){
     clearTimeout(debounce);
@@ -743,6 +969,12 @@ async function renderClientEditor(main, username){
       const type = btn.dataset.add;
       let block = { type };
       if(type==='table') block.rows = [['Empresa','Cargo','Estado'],['','','']];
+      if(type==='list'){ block.items = ['']; block.checklist = false; }
+      if(type==='gallery') block.images = [{url:'',caption:''}];
+      if(type==='metric'){ block.value=''; block.label=''; }
+      if(type==='quote'){ block.content=''; block.source=''; }
+      if(type==='link'){ block.label='Ver vacante'; block.url=''; }
+      if(type==='heading') block.content='';
       blocks.push(block);
       persist();
       renderBlocks();
@@ -781,13 +1013,36 @@ async function renderClientView(client){
   }
 
   blocks.forEach(block=>{
+    const color = blockColor(block);
     const b = el(`<div class="report-block"></div>`);
+
     if(block.type === 'text'){
-      b.innerHTML = `<p>${escapeHtml(block.content||'')}</p>`;
+      b.innerHTML = `<p style="border-left:3px solid ${color};padding-left:14px;">${escapeHtml(block.content||'')}</p>`;
     }
+
+    if(block.type === 'heading'){
+      b.classList.add('heading');
+      b.innerHTML = `<h3 style="border-color:${color};color:${color};">${escapeHtml(block.content||'')}</h3>`;
+    }
+
     if(block.type === 'image' && block.url){
       b.innerHTML = `<img src="${escapeAttr(block.url)}" alt="${escapeAttr(block.caption||'')}">${block.caption ? `<div class="caption">${escapeHtml(block.caption)}</div>` : ''}`;
     }
+
+    if(block.type === 'gallery' && block.images){
+      const imgs = block.images.filter(im=>im.url);
+      if(imgs.length){
+        const grid = document.createElement('div');
+        grid.className = 'gallery-grid';
+        imgs.forEach(im=>{
+          const fig = document.createElement('figure');
+          fig.innerHTML = `<img src="${escapeAttr(im.url)}" alt="${escapeAttr(im.caption||'')}">${im.caption?`<figcaption>${escapeHtml(im.caption)}</figcaption>`:''}`;
+          grid.appendChild(fig);
+        });
+        b.appendChild(grid);
+      }
+    }
+
     if(block.type === 'table' && block.rows){
       const table = document.createElement('table');
       table.className = 'view-table';
@@ -796,12 +1051,43 @@ async function renderClientView(client){
         row.forEach(cell=>{
           const cellEl = document.createElement(rIdx===0 ? 'th' : 'td');
           cellEl.textContent = cell;
+          if(rIdx===0){ cellEl.style.background = color; cellEl.style.color = '#fff'; cellEl.style.borderColor = color; }
           tr.appendChild(cellEl);
         });
         table.appendChild(tr);
       });
       b.appendChild(table);
     }
+
+    if(block.type === 'metric'){
+      b.classList.add('metric');
+      b.innerHTML = `<div class="metric-value" style="color:${color};">${escapeHtml(block.value||'')}</div><div class="metric-label">${escapeHtml(block.label||'')}</div>`;
+    }
+
+    if(block.type === 'quote'){
+      b.classList.add('quote');
+      b.style.borderColor = color;
+      b.innerHTML = `<p>${escapeHtml(block.content||'')}</p>${block.source?`<div class="quote-source">— ${escapeHtml(block.source)}</div>`:''}`;
+    }
+
+    if(block.type === 'list' && block.items){
+      b.classList.add('list');
+      if(block.checklist) b.classList.add('checklist');
+      const items = block.items.filter(i=>i && i.trim());
+      const ul = document.createElement('ul');
+      items.forEach(i=>{
+        const li = document.createElement('li');
+        if(block.checklist) li.style.color = color;
+        li.textContent = i;
+        ul.appendChild(li);
+      });
+      b.appendChild(ul);
+    }
+
+    if(block.type === 'link' && block.url){
+      b.innerHTML = `<a class="report-btn-link" style="background:${color};" href="${escapeAttr(block.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(block.label||'Ver enlace')}</a>`;
+    }
+
     area.appendChild(b);
   });
 }

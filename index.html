@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Empleabilidad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#20261f;
+    --paper:#faf8f3;
+    --paper-dim:#f1ede3;
+    --gold:#a97c3a;
+    --teal:#33564d;
+    --line:#dcd5c3;
+    --red:#a14a3a;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  h1,h2,h3{
+    font-family:'Lora',Georgia,serif;
+    font-weight:600;
+    margin:0;
+    color:var(--ink);
+  }
+  .app{max-width:1100px;margin:0 auto;padding:0 24px;}
+  a{color:var(--teal);}
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border:1px solid var(--ink);
+    background:var(--ink);
+    color:var(--paper);
+    padding:9px 16px;
+    border-radius:var(--radius);
+    font-size:14px;
+    font-weight:500;
+    transition:opacity .15s ease;
+  }
+  button:hover{opacity:.85;}
+  button.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--line);
+  }
+  button.ghost{
+    background:transparent;
+    color:var(--teal);
+    border:none;
+    padding:4px 8px;
+    font-size:13px;
+  }
+  button.danger{
+    background:transparent;
+    color:var(--red);
+    border:1px solid var(--red);
+  }
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  input,textarea{
+    font-family:inherit;
+    font-size:14px;
+    padding:9px 11px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:#fff;
+    color:var(--ink);
+    width:100%;
+  }
+  input:focus,textarea:focus,button:focus-visible{
+    outline:2px solid var(--gold);
+    outline-offset:1px;
+  }
+  label{
+    font-size:12.5px;
+    color:#6b6555;
+    display:block;
+    margin-bottom:5px;
+  }
+  /* ---------- Top bar ---------- */
+  .topbar{
+    border-bottom:1px solid var(--line);
+    padding:20px 0;
+    margin-bottom:36px;
+  }
+  .topbar .app{display:flex;justify-content:space-between;align-items:center;}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand h1{font-size:20px;letter-spacing:.2px;}
+  .brand span{font-size:13px;color:#6b6555;}
+  .who{font-size:13px;color:#6b6555;display:flex;align-items:center;gap:14px;}
+
+  /* ---------- Login ---------- */
+  .login-wrap{
+    min-height:88vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .login-card{
+    width:100%;
+    max-width:380px;
+    padding:40px 36px;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:6px;
+  }
+  .login-card h1{font-size:24px;margin-bottom:6px;}
+  .login-card p.sub{color:#6b6555;font-size:13.5px;margin:0 0 26px;}
+  .role-toggle{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:24px;
+  }
+  .role-toggle button{
+    flex:1;
+    background:transparent;
+    color:var(--ink);
+    border:none;
+    border-radius:0;
+    font-size:13px;
+    padding:10px;
+  }
+  .role-toggle button.active{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .field{margin-bottom:16px;}
+  .login-card form button[type=submit]{width:100%;margin-top:6px;}
+  .err{color:var(--red);font-size:13px;margin-top:12px;}
+  .hint{font-size:12px;color:#918a76;margin-top:22px;line-height:1.6;border-top:1px solid var(--line);padding-top:16px;}
+
+  /* ---------- Admin ---------- */
+  .layout{display:grid;grid-template-columns:250px 1fr;gap:0;align-items:start;}
+  .sidebar{
+    border-right:1px solid var(--line);
+    padding-right:22px;
+    position:sticky;
+    top:20px;
+  }
+  .sidebar h2{font-size:14px;font-weight:600;margin-bottom:14px;font-family:'Inter';color:#6b6555;}
+  .client-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 10px;
+    border-radius:var(--radius);
+    cursor:pointer;
+    font-size:14px;
+    margin-bottom:2px;
+  }
+  .client-item:hover{background:var(--paper-dim);}
+  .client-item.active{background:var(--ink);color:var(--paper);}
+  .client-item .badge{font-size:11px;color:#918a76;}
+  .client-item.active .badge{color:#c9c2ac;}
+  .add-client{
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+  }
+  .add-client input{margin-bottom:8px;}
+  .main{padding-left:32px;min-height:60vh;}
+  .main-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:22px;
+    padding-bottom:18px;
+    border-bottom:1px solid var(--line);
+  }
+  .main-header h2{font-size:22px;}
+  .main-header .meta{font-size:13px;color:#6b6555;margin-top:4px;}
+  .toolbar{
+    display:flex;
+    gap:8px;
+    margin-bottom:24px;
+  }
+  .empty-state{
+    padding:60px 20px;
+    text-align:center;
+    color:#918a76;
+    border:1px dashed var(--line);
+    border-radius:6px;
+  }
+
+  /* ---------- Blocks (editor) ---------- */
+  .block{
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    background:#fff;
+    position:relative;
+  }
+  .block-toprow{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+  }
+  .block-kind{
+    font-size:11.5px;
+    color:#918a76;
+  }
+  .block-actions{display:flex;gap:4px;align-items:center;}
+  .block textarea{min-height:90px;resize:vertical;}
+  table.editable-table{width:100%;border-collapse:collapse;margin-bottom:10px;}
+  table.editable-table td, table.editable-table th{
+    border:1px solid var(--line);
+    padding:0;
+  }
+  table.editable-table th{background:var(--paper-dim);}
+  table.editable-table input{
+    border:none;
+    border-radius:0;
+    padding:8px 9px;
+    font-size:13.5px;
+    background:transparent;
+    width:100%;
+  }
+  table.editable-table th input{font-weight:600;}
+  .table-controls{display:flex;gap:8px;margin-bottom:4px;}
+  .img-preview{
+    max-width:100%;
+    max-height:320px;
+    display:block;
+    border:1px solid var(--line);
+    margin-top:10px;
+    border-radius:2px;
+  }
+  .caption-input{margin-top:8px;}
+  .save-note{
+    font-size:12px;
+    color:var(--teal);
+    height:16px;
+    margin-left:auto;
+    padding-right:6px;
+  }
+
+  /* ---------- Client report view ---------- */
+  .report-header{
+    margin-bottom:28px;
+    padding-bottom:20px;
+    border-bottom:2px solid var(--ink);
+  }
+  .report-header .eyebrow{font-size:13px;color:var(--gold);margin-bottom:6px;}
+  .report-header h2{font-size:28px;}
+  .report-block{margin-bottom:30px;}
+  .report-block p{white-space:pre-wrap;margin:0;font-size:15px;}
+  .report-block img{max-width:100%;border-radius:2px;border:1px solid var(--line);}
+  .report-block .caption{font-size:12.5px;color:#918a76;margin-top:8px;}
+  table.view-table{width:100%;border-collapse:collapse;font-size:14px;}
+  table.view-table th,table.view-table td{
+    border:1px solid var(--line);
+    padding:9px 12px;
+    text-align:left;
+  }
+  table.view-table th{background:var(--paper-dim);font-weight:600;}
+
+  @media (max-width:760px){
+    .layout{display:block;}
+    .sidebar{border-right:none;border-bottom:1px solid var(--line);padding:0 0 20px;margin-bottom:24px;position:static;}
+    .main{padding-left:0;}
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script>
+/* ===========================================================
+   CONFIGURACIÓN DE FIREBASE — PEGA AQUÍ TUS DATOS
+   Los obtienes gratis en https://console.firebase.google.com
+   (ver instrucciones que te dio Claude)
+=========================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCkmubuh2hbN73h_mbkj0tlo5pI8qbTgKk",
+  authDomain: "joblink-ec.firebaseapp.com",
+  projectId: "joblink-ec",
+  storageBucket: "joblink-ec.firebasestorage.app",
+  messagingSenderId: "463522011377",
+  appId: "1:463522011377:web:11e922f0d85bd16ac4b150"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* ---------------------------------------------------------
+   Almacenamiento (Firestore — gratis, plan Spark)
+--------------------------------------------------------- */
+const store = {
+  async get(key){
+    try{
+      const doc = await db.collection('portal').doc(key).get();
+      if(!doc.exists) return null;
+      return JSON.parse(doc.data().value);
+    }
+    catch(e){ console.error('storage get failed', e); return null; }
+  },
+  async set(key, value){
+    try{
+      await db.collection('portal').doc(key).set({ value: JSON.stringify(value) });
+    }
+    catch(e){ console.error('storage set failed', e); }
+  }
+};
+
+const ADMIN_KEY = 'admin-config';
+const CLIENTS_KEY = 'clients-list';
+
+let state = {
+  role: null,        // 'admin' | 'client'
+  clientUser: null,  // username string when role === client
+  clients: [],        // [{username, password, name}]
+  activeClient: null, // username selected in admin view
+  reports: {}          // cache: username -> blocks array
+};
+
+let saveTimer = null;
+
+/* ---------------------------------------------------------
+   Init
+--------------------------------------------------------- */
+async function init(){
+  if(firebaseConfig.apiKey === "PEGA_AQUI_TU_API_KEY"){
+    mount(el(`
+      <div class="login-wrap">
+        <div class="login-card">
+          <h1>Falta configurar Firebase</h1>
+          <p class="sub">Abre este archivo con un editor de texto, busca "firebaseConfig" cerca del inicio del &lt;script&gt;, y pega ahí los datos de tu proyecto de Firebase (los obtienes gratis en console.firebase.google.com). Luego vuelve a subir el archivo a GitHub.</p>
+        </div>
+      </div>
+    `));
+    return;
+  }
+  let admin = await store.get(ADMIN_KEY);
+  if(!admin){
+    admin = { username:'agencia', password:'empleo2026' };
+    await store.set(ADMIN_KEY, admin);
+  }
+  let clients = await store.get(CLIENTS_KEY);
+  if(!clients){ clients = []; await store.set(CLIENTS_KEY, clients); }
+  state.clients = clients;
+  state._admin = admin;
+  renderLogin();
+}
+
+function el(html){
+  const div = document.createElement('div');
+  div.innerHTML = html.trim();
+  return div.firstElementChild;
+}
+
+function mount(node){
+  const root = document.getElementById('root');
+  root.innerHTML = '';
+  root.appendChild(node);
+}
+
+/* ---------------------------------------------------------
+   LOGIN VIEW
+--------------------------------------------------------- */
+function renderLogin(defaultRole){
+  defaultRole = defaultRole || 'admin';
+  const wrap = el(`
+    <div class="login-wrap">
+      <div class="login-card">
+        <h1>Portal de Empleabilidad</h1>
+        <p class="sub">Ingresa para ver o gestionar informes de postulación.</p>
+        <div class="role-toggle">
+          <button data-role="admin" class="${defaultRole==='admin'?'active':''}">Soy la agencia</button>
+          <button data-role="client" class="${defaultRole==='client'?'active':''}">Soy cliente</button>
+        </div>
+        <form id="loginForm">
+          <div class="field">
+            <label>Usuario</label>
+            <input id="loginUser" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label>Contraseña</label>
+            <input id="loginPass" type="password" autocomplete="current-password" required>
+          </div>
+          <button type="submit">Ingresar</button>
+          <div class="err" id="loginErr"></div>
+        </form>
+        <div class="hint">Este portal guarda los datos de forma compartida para quienes tengan este enlace. No uses información extremadamente sensible (ej. contraseñas de correo, documentos de identidad).</div>
+      </div>
+    </div>
+  `);
+  let role = defaultRole;
+  wrap.querySelectorAll('.role-toggle button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      role = btn.dataset.role;
+      wrap.querySelectorAll('.role-toggle button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+  wrap.querySelector('#loginForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const u = wrap.querySelector('#loginUser').value.trim();
+    const p = wrap.querySelector('#loginPass').value;
+    const errBox = wrap.querySelector('#loginErr');
+    errBox.textContent = '';
+
+    if(role === 'admin'){
+      const admin = await store.get(ADMIN_KEY);
+      if(admin && admin.username === u && admin.password === p){
+        state.role = 'admin';
+        const clients = await store.get(CLIENTS_KEY);
+        state.clients = clients || [];
+        renderAdmin();
+      } else {
+        errBox.textContent = 'Usuario o contraseña de agencia incorrectos.';
+      }
+    } else {
+      const clients = await store.get(CLIENTS_KEY);
+      const match = (clients||[]).find(c => c.username === u && c.password === p);
+      if(match){
+        state.role = 'client';
+        state.clientUser = u;
+        renderClientView(match);
+      } else {
+        errBox.textContent = 'Usuario o contraseña incorrectos.';
+      }
+    }
+  });
+  mount(wrap);
+}
+
+function logout(){
+  state = { role:null, clientUser:null, clients: state.clients, activeClient:null, reports:{} };
+  renderLogin();
+}
+
+/* ---------------------------------------------------------
+   TOPBAR (shared)
+--------------------------------------------------------- */
+function topbar(rightLabel){
+  return `
+    <div class="topbar">
+      <div class="app">
+        <div class="brand">
+          <h1>Portal de Empleabilidad</h1>
+          <span>Informes de postulación</span>
+        </div>
+        <div class="who">
+          <span>${rightLabel}</span>
+          <button class="secondary" id="logoutBtn">Salir</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ---------------------------------------------------------
+   ADMIN VIEW
+--------------------------------------------------------- */
+async function renderAdmin(){
+  const wrap = el(`<div>${topbar('Agencia')}<div class="app"><div class="layout" id="layoutRoot"></div></div></div>`);
+  wrap.querySelector('#logoutBtn').addEventListener('click', logout);
+  mount(wrap);
+  await renderAdminLayout();
+}
+
+async function renderAdminLayout(){
+  const layoutRoot = document.getElementById('layoutRoot');
+  layoutRoot.innerHTML = '';
+
+  const sidebar = el(`
+    <div class="sidebar">
+      <h2>Clientes</h2>
+      <div id="clientList"></div>
+      <div class="add-client">
+        <label>Agregar nuevo cliente</label>
+        <input id="newClientName" placeholder="Nombre del cliente">
+        <input id="newClientUser" placeholder="usuario">
+        <input id="newClientPass" placeholder="contraseña">
+        <button id="addClientBtn" style="width:100%;margin-top:2px;">Agregar cliente</button>
+        <div class="err" id="addClientErr" style="margin-top:8px;"></div>
+      </div>
+    </div>
+  `);
+  const main = el(`<div class="main" id="mainArea"></div>`);
+  layoutRoot.appendChild(sidebar);
+  layoutRoot.appendChild(main);
+
+  const listDiv = sidebar.querySelector('#clientList');
+  if(state.clients.length === 0){
+    listDiv.innerHTML = `<div style="font-size:13px;color:#918a76;">Aún no tienes clientes. Agrega el primero abajo.</div>`;
+  } else {
+    state.clients.forEach(c=>{
+      const item = el(`
+        <div class="client-item ${state.activeClient===c.username?'active':''}">
+          <span>${escapeHtml(c.name)}</span>
+          <span class="badge">${escapeHtml(c.username)}</span>
+        </div>
+      `);
+      item.addEventListener('click', ()=>{
+        state.activeClient = c.username;
+        renderAdminLayout();
+      });
+      listDiv.appendChild(item);
+    });
+  }
+
+  sidebar.querySelector('#addClientBtn').addEventListener('click', async ()=>{
+    const name = sidebar.querySelector('#newClientName').value.trim();
+    const user = sidebar.querySelector('#newClientUser').value.trim();
+    const pass = sidebar.querySelector('#newClientPass').value;
+    const errBox = sidebar.querySelector('#addClientErr');
+    errBox.textContent = '';
+    if(!name || !user || !pass){ errBox.textContent = 'Completa nombre, usuario y contraseña.'; return; }
+    if(state.clients.find(c=>c.username===user)){ errBox.textContent = 'Ese usuario ya existe.'; return; }
+    const newClient = { name, username:user, password:pass };
+    state.clients.push(newClient);
+    await store.set(CLIENTS_KEY, state.clients);
+    await store.set('report:'+user, []);
+    state.activeClient = user;
+    renderAdminLayout();
+  });
+
+  if(state.activeClient){
+    await renderClientEditor(main, state.activeClient);
+  } else {
+    main.innerHTML = `<div class="empty-state">Selecciona un cliente a la izquierda, o agrega uno nuevo para empezar a construir su informe.</div>`;
+  }
+}
+
+async function renderClientEditor(main, username){
+  const client = state.clients.find(c=>c.username===username);
+  let blocks = state.reports[username];
+  if(!blocks){
+    blocks = await store.get('report:'+username) || [];
+    state.reports[username] = blocks;
+  }
+
+  main.innerHTML = '';
+  const header = el(`
+    <div class="main-header">
+      <div>
+        <h2>${escapeHtml(client.name)}</h2>
+        <div class="meta">Usuario del cliente: ${escapeHtml(client.username)} &nbsp;·&nbsp; el cliente ingresa con su usuario y contraseña</div>
+      </div>
+      <button class="danger" id="removeClientBtn">Eliminar cliente</button>
+    </div>
+  `);
+  main.appendChild(header);
+
+  header.querySelector('#removeClientBtn').addEventListener('click', async ()=>{
+    if(!confirm('¿Eliminar a ' + client.name + ' y su informe? Esta acción no se puede deshacer.')) return;
+    state.clients = state.clients.filter(c=>c.username!==username);
+    await store.set(CLIENTS_KEY, state.clients);
+    delete state.reports[username];
+    state.activeClient = null;
+    renderAdminLayout();
+  });
+
+  const toolbar = el(`
+    <div class="toolbar">
+      <button class="secondary" data-add="text">+ Texto</button>
+      <button class="secondary" data-add="image">+ Imagen</button>
+      <button class="secondary" data-add="table">+ Tabla</button>
+      <span class="save-note" id="saveNote"></span>
+    </div>
+  `);
+  main.appendChild(toolbar);
+
+  const blocksContainer = el(`<div id="blocksContainer"></div>`);
+  main.appendChild(blocksContainer);
+
+  function flashSaved(){
+    const note = document.getElementById('saveNote');
+    if(!note) return;
+    note.textContent = 'Guardado';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>{ if(note) note.textContent=''; }, 1200);
+  }
+
+  async function persist(){
+    await store.set('report:'+username, blocks);
+    flashSaved();
+  }
+
+  function renderBlocks(){
+    blocksContainer.innerHTML = '';
+    if(blocks.length === 0){
+      blocksContainer.appendChild(el(`<div class="empty-state">Este informe está vacío. Agrega un bloque de texto, imagen o tabla arriba.</div>`));
+      return;
+    }
+    blocks.forEach((block, idx)=>{
+      blocksContainer.appendChild(renderBlockEditor(block, idx));
+    });
+  }
+
+  function renderBlockEditor(block, idx){
+    const kindLabel = block.type==='text' ? 'Texto' : block.type==='image' ? 'Imagen' : 'Tabla';
+    const wrapper = el(`
+      <div class="block">
+        <div class="block-toprow">
+          <span class="block-kind">${kindLabel}</span>
+          <div class="block-actions">
+            <button class="ghost" data-act="up" ${idx===0?'disabled':''}>↑ Subir</button>
+            <button class="ghost" data-act="down" ${idx===blocks.length-1?'disabled':''}>↓ Bajar</button>
+            <button class="ghost" data-act="del" style="color:var(--red);">Eliminar</button>
+          </div>
+        </div>
+        <div class="block-body"></div>
+      </div>
+    `);
+    const body = wrapper.querySelector('.block-body');
+
+    if(block.type === 'text'){
+      body.innerHTML = `<textarea placeholder="Escribe el contenido de este bloque...">${escapeHtml(block.content||'')}</textarea>`;
+      const ta = body.querySelector('textarea');
+      ta.addEventListener('input', ()=>{ block.content = ta.value; scheduleSave(); });
+    }
+
+    if(block.type === 'image'){
+      body.innerHTML = `
+        <label>URL de la imagen</label>
+        <input class="img-url" placeholder="https://..." value="${escapeAttr(block.url||'')}">
+        <input class="caption-input" placeholder="Descripción (opcional)" value="${escapeAttr(block.caption||'')}">
+        <div class="img-preview-wrap"></div>
+      `;
+      const urlInput = body.querySelector('.img-url');
+      const capInput = body.querySelector('.caption-input');
+      const previewWrap = body.querySelector('.img-preview-wrap');
+      function updatePreview(){
+        previewWrap.innerHTML = '';
+        if(block.url){
+          const img = document.createElement('img');
+          img.src = block.url;
+          img.className = 'img-preview';
+          img.onerror = ()=>{ previewWrap.innerHTML = '<div style="font-size:12px;color:var(--red);margin-top:8px;">No se pudo cargar esa URL de imagen.</div>'; };
+          previewWrap.appendChild(img);
+        }
+      }
+      urlInput.addEventListener('input', ()=>{ block.url = urlInput.value; scheduleSave(); updatePreview(); });
+      capInput.addEventListener('input', ()=>{ block.caption = capInput.value; scheduleSave(); });
+      updatePreview();
+    }
+
+    if(block.type === 'table'){
+      body.appendChild(renderTableEditor(block));
+    }
+
+    wrapper.querySelector('[data-act="up"]').addEventListener('click', ()=>{
+      if(idx===0) return;
+      [blocks[idx-1], blocks[idx]] = [blocks[idx], blocks[idx-1]];
+      persist(); renderBlocks();
+    });
+    wrapper.querySelector('[data-act="down"]').addEventListener('click', ()=>{
+      if(idx===blocks.length-1) return;
+      [blocks[idx+1], blocks[idx]] = [blocks[idx], blocks[idx+1]];
+      persist(); renderBlocks();
+    });
+    wrapper.querySelector('[data-act="del"]').addEventListener('click', ()=>{
+      blocks.splice(idx,1);
+      persist(); renderBlocks();
+    });
+
+    return wrapper;
+  }
+
+  function renderTableEditor(block){
+    if(!block.rows) block.rows = [['Empresa','Cargo','Estado'],['','','']];
+    const container = el(`<div></div>`);
+    const controls = el(`
+      <div class="table-controls">
+        <button class="ghost" data-t="addrow">+ Fila</button>
+        <button class="ghost" data-t="addcol">+ Columna</button>
+        <button class="ghost" data-t="delrow">− Fila</button>
+        <button class="ghost" data-t="delcol">− Columna</button>
+      </div>
+    `);
+    container.appendChild(controls);
+    const tableWrap = el(`<div></div>`);
+    container.appendChild(tableWrap);
+
+    function draw(){
+      tableWrap.innerHTML = '';
+      const table = document.createElement('table');
+      table.className = 'editable-table';
+      block.rows.forEach((row, rIdx)=>{
+        const tr = document.createElement('tr');
+        row.forEach((cell, cIdx)=>{
+          const cellEl = document.createElement(rIdx===0 ? 'th' : 'td');
+          const input = document.createElement('input');
+          input.value = cell;
+          input.addEventListener('input', ()=>{
+            block.rows[rIdx][cIdx] = input.value;
+            scheduleSave();
+          });
+          cellEl.appendChild(input);
+          tr.appendChild(cellEl);
+        });
+        table.appendChild(tr);
+      });
+      tableWrap.innerHTML = '';
+      tableWrap.appendChild(table);
+    }
+
+    controls.querySelector('[data-t="addrow"]').addEventListener('click', ()=>{
+      const cols = block.rows[0].length;
+      block.rows.push(new Array(cols).fill(''));
+      draw(); scheduleSave();
+    });
+    controls.querySelector('[data-t="addcol"]').addEventListener('click', ()=>{
+      block.rows.forEach(r=>r.push(''));
+      draw(); scheduleSave();
+    });
+    controls.querySelector('[data-t="delrow"]').addEventListener('click', ()=>{
+      if(block.rows.length>1){ block.rows.pop(); draw(); scheduleSave(); }
+    });
+    controls.querySelector('[data-t="delcol"]').addEventListener('click', ()=>{
+      if(block.rows[0].length>1){ block.rows.forEach(r=>r.pop()); draw(); scheduleSave(); }
+    });
+
+    draw();
+    return container;
+  }
+
+  let debounce = null;
+  function scheduleSave(){
+    clearTimeout(debounce);
+    debounce = setTimeout(persist, 500);
+  }
+
+  toolbar.querySelectorAll('[data-add]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const type = btn.dataset.add;
+      let block = { type };
+      if(type==='table') block.rows = [['Empresa','Cargo','Estado'],['','','']];
+      blocks.push(block);
+      persist();
+      renderBlocks();
+    });
+  });
+
+  renderBlocks();
+}
+
+/* ---------------------------------------------------------
+   CLIENT VIEW (read-only report)
+--------------------------------------------------------- */
+async function renderClientView(client){
+  const blocks = await store.get('report:'+client.username) || [];
+  const wrap = el(`
+    <div>
+      ${topbar(escapeHtml(client.name))}
+      <div class="app" id="reportArea"></div>
+    </div>
+  `);
+  wrap.querySelector('#logoutBtn').addEventListener('click', logout);
+  mount(wrap);
+
+  const area = wrap.querySelector('#reportArea');
+  const header = el(`
+    <div class="report-header">
+      <div class="eyebrow">Informe de postulación laboral</div>
+      <h2>${escapeHtml(client.name)}</h2>
+    </div>
+  `);
+  area.appendChild(header);
+
+  if(blocks.length === 0){
+    area.appendChild(el(`<div class="empty-state">Tu informe aún no tiene contenido. Vuelve pronto.</div>`));
+    return;
+  }
+
+  blocks.forEach(block=>{
+    const b = el(`<div class="report-block"></div>`);
+    if(block.type === 'text'){
+      b.innerHTML = `<p>${escapeHtml(block.content||'')}</p>`;
+    }
+    if(block.type === 'image' && block.url){
+      b.innerHTML = `<img src="${escapeAttr(block.url)}" alt="${escapeAttr(block.caption||'')}">${block.caption ? `<div class="caption">${escapeHtml(block.caption)}</div>` : ''}`;
+    }
+    if(block.type === 'table' && block.rows){
+      const table = document.createElement('table');
+      table.className = 'view-table';
+      block.rows.forEach((row, rIdx)=>{
+        const tr = document.createElement('tr');
+        row.forEach(cell=>{
+          const cellEl = document.createElement(rIdx===0 ? 'th' : 'td');
+          cellEl.textContent = cell;
+          tr.appendChild(cellEl);
+        });
+        table.appendChild(tr);
+      });
+      b.appendChild(table);
+    }
+    area.appendChild(b);
+  });
+}
+
+/* ---------------------------------------------------------
+   Utils
+--------------------------------------------------------- */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+function escapeAttr(str){ return escapeHtml(str); }
+
+init();
+</script>
+</body>
+</html>
